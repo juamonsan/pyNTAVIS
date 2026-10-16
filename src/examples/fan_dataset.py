@@ -3,7 +3,7 @@ Builds train/validation folders from the Fan NTAS dataset for the experiments of
 
 File names follow the convention <sample>_<speed>_<sensor>_<magnets>_<external>_<internal>.aedat, where:
     sample:   sample number of the recording.
-    speed:    0 (stop), 1 (minimum) or 2 (maximum).
+    speed:    0 (stop), 1 (minimum), 2 (medium) or 3 (maximum).
     sensor:   Accel (accelerometer) or Mag (magnetometer).
     magnets:  3 (base, balanced), 4 and 5 (unbalanced) or 6 (balanced).
     external: Yes or No (external vibration noise, tapping on the table).
@@ -11,7 +11,8 @@ File names follow the convention <sample>_<speed>_<sensor>_<magnets>_<external>_
 Names of the first dataset version, without the internal field, are read as internal = No.
 
 The metadata of every recording is also listed in Class_Table.csv (same columns as Class_Table.xlsx: Sample number,
-Fan Speed, Sensor, Magnets/Weight, External Noise, Internal Noise, Date). When the table exists, every file name is
+Fan Speed, Sensor, Magnets/Weight, External Noise, Internal Noise, Date). Fan Speed can be written as Stop (or 0), Min,
+Medium or Max, or as the numeric code 0-3. When the table exists, every file name is
 checked against it, and files that don't match are skipped with a warning. The table also gives the recording date.
 
 The repetition of each recording is its position inside its combination (speed, sensor, magnets, external and internal
@@ -30,9 +31,10 @@ Recording = namedtuple('Recording', ['path', 'sample', 'speed', 'sensor', 'magne
 
 SENSORS = ['Accel', 'Mag']
 NUM_FOLDS = 4
-SPEED_NAMES = {0: 'stop', 1: 'min', 2: 'max'}
+STOP, MIN, MEDIUM, MAX = 0, 1, 2, 3
+SPEED_NAMES = {STOP: 'stop', MIN: 'min', MEDIUM: 'medium', MAX: 'max'}
 TABLE_NAME = 'Class_Table.csv'
-_TABLE_SPEEDS = {'0': 0, 'min': 1, 'max': 2}
+_TABLE_SPEEDS = {'stop': STOP, '0': STOP, 'min': MIN, '1': MIN, 'medium': MEDIUM, '2': MEDIUM, 'max': MAX, '3': MAX}
 
 
 def balance(recording):
@@ -59,99 +61,100 @@ EXPERIMENTS = {
     '0_session_check': dict(
         description='Recording day: 8 October (last repetition) vs 14 October. Min and max speed, no external or internal noise. '
                     'Leave-one-load-out folds: fold k validates on the recordings with k + 2 magnets.',
-        train=lambda r: no_internal(r) and r.speed > 0 and r.external_noise == 'No' and r.repetition in (3, 4),
+        train=lambda r: no_internal(r) and r.speed in (MIN, MAX) and r.external_noise == 'No' and r.repetition in (3, 4),
         label=lambda r: 'day_' + r.date,
         fold=lambda r: r.magnets - 2),
     '1_speed': dict(
-        description='Speed (stop / min / max). All loads, no external or internal noise.',
+        description='Speed (stop / min / medium / max, the speeds present in the dataset). All loads, no external or internal noise.',
         train=lambda r: no_internal(r) and r.external_noise == 'No',
         label=lambda r: SPEED_NAMES[r.speed]),
     '2a_unbalance': dict(
         description='Balanced {3, 6} vs unbalanced {4, 5}. Min and max speed, no external or internal noise.',
-        train=lambda r: no_internal(r) and r.speed > 0 and r.external_noise == 'No',
+        train=lambda r: no_internal(r) and r.speed in (MIN, MAX) and r.external_noise == 'No',
         label=balance),
     '2a_unbalance_min': dict(
         description='Balanced {3, 6} vs unbalanced {4, 5}. Min speed only, no external or internal noise.',
-        train=lambda r: no_internal(r) and r.speed == 1 and r.external_noise == 'No',
+        train=lambda r: no_internal(r) and r.speed == MIN and r.external_noise == 'No',
         label=balance),
     '2a_unbalance_max': dict(
         description='Balanced {3, 6} vs unbalanced {4, 5}. Max speed only, no external or internal noise.',
-        train=lambda r: no_internal(r) and r.speed == 2 and r.external_noise == 'No',
+        train=lambda r: no_internal(r) and r.speed == MAX and r.external_noise == 'No',
         label=balance),
     '2b_unbalance_noise': dict(
         description='Balanced vs unbalanced. Min and max speed, with and without external noise in both sets. No internal noise.',
-        train=lambda r: no_internal(r) and r.speed > 0,
+        train=lambda r: no_internal(r) and r.speed in (MIN, MAX),
         label=balance),
     '2c_unbalance_unseen_noise': dict(
         description='Balanced vs unbalanced. Train without external noise, validate only with external noise. No internal noise.',
-        train=lambda r: no_internal(r) and r.speed > 0 and r.external_noise == 'No',
-        validation=lambda r: no_internal(r) and r.speed > 0 and r.external_noise == 'Yes',
+        train=lambda r: no_internal(r) and r.speed in (MIN, MAX) and r.external_noise == 'No',
+        validation=lambda r: no_internal(r) and r.speed in (MIN, MAX) and r.external_noise == 'Yes',
         label=balance),
     '2d_unbalance_min_to_max': dict(
         description='Balanced vs unbalanced, no external or internal noise. Train at min speed, validate at max speed.',
-        train=lambda r: no_internal(r) and r.speed == 1 and r.external_noise == 'No',
-        validation=lambda r: no_internal(r) and r.speed == 2 and r.external_noise == 'No',
+        train=lambda r: no_internal(r) and r.speed == MIN and r.external_noise == 'No',
+        validation=lambda r: no_internal(r) and r.speed == MAX and r.external_noise == 'No',
         label=balance),
     '2d_unbalance_max_to_min': dict(
         description='Balanced vs unbalanced, no external or internal noise. Train at max speed, validate at min speed.',
-        train=lambda r: no_internal(r) and r.speed == 2 and r.external_noise == 'No',
-        validation=lambda r: no_internal(r) and r.speed == 1 and r.external_noise == 'No',
+        train=lambda r: no_internal(r) and r.speed == MAX and r.external_noise == 'No',
+        validation=lambda r: no_internal(r) and r.speed == MIN and r.external_noise == 'No',
         label=balance),
     '3_load_min': dict(
         description='Number of magnets (3 / 4 / 5 / 6). Min speed, no external or internal noise.',
-        train=lambda r: no_internal(r) and r.speed == 1 and r.external_noise == 'No',
+        train=lambda r: no_internal(r) and r.speed == MIN and r.external_noise == 'No',
         label=lambda r: str(r.magnets) + '_magnets'),
     '3_load_max': dict(
         description='Number of magnets (3 / 4 / 5 / 6). Max speed, no external or internal noise.',
-        train=lambda r: no_internal(r) and r.speed == 2 and r.external_noise == 'No',
+        train=lambda r: no_internal(r) and r.speed == MAX and r.external_noise == 'No',
         label=lambda r: str(r.magnets) + '_magnets'),
     '3_load': dict(
         description='Number of magnets (3 / 4 / 5 / 6). Min and max speed together, no external or internal noise.',
-        train=lambda r: no_internal(r) and r.speed > 0 and r.external_noise == 'No',
+        train=lambda r: no_internal(r) and r.speed in (MIN, MAX) and r.external_noise == 'No',
         label=lambda r: str(r.magnets) + '_magnets'),
     '4_state': dict(
-        description='Machine state: stop / min-balanced / min-unbalanced / max-balanced / max-unbalanced. No external or internal noise.',
+        description='Machine state: stop / <speed>-balanced / <speed>-unbalanced for every speed present (min, medium, max). No external or internal noise.',
         train=lambda r: no_internal(r) and r.external_noise == 'No',
-        label=lambda r: 'stop' if r.speed == 0 else SPEED_NAMES[r.speed] + '_' + balance(r)),
+        label=lambda r: 'stop' if r.speed == STOP else SPEED_NAMES[r.speed] + '_' + balance(r)),
     '5_noise': dict(
         description='External noise (tapping) vs no external noise. All speeds and loads, no internal noise.',
         train=no_internal,
         label=lambda r: 'tapping' if r.external_noise == 'Yes' else 'no_tapping'),
 
     # Internal noise (tape touching the blades). Recorded only at min and max speed, all on 14 October.
+    # The experiments that say "min and max speed" don't use the medium speed recordings.
     '6a_tape': dict(
         description='Internal noise (tape) vs no internal noise. Min and max speed, all loads, no external noise.',
-        train=lambda r: r.speed > 0 and r.external_noise == 'No',
+        train=lambda r: r.speed in (MIN, MAX) and r.external_noise == 'No',
         label=tape),
     '6b_tape_with_tapping': dict(
         description='Internal noise (tape) vs no internal noise. Min and max speed, all loads, with and without external noise in both sets.',
-        train=lambda r: r.speed > 0,
+        train=lambda r: r.speed in (MIN, MAX),
         label=tape),
     '6c_tape_same_day': dict(
         description='Internal noise (tape) vs no internal noise without the recording day as a shortcut. Min and max speed, '
                     'no external noise. Leave-one-load-out folds: fold k validates on the 14 October recordings with k + 2 '
                     'magnets (one repetition with tape and one without), and trains on the other loads from both days.',
-        train=lambda r: r.speed > 0 and r.external_noise == 'No',
-        validation=lambda r: (r.speed > 0 and r.external_noise == 'No' and r.date == '20261014'
+        train=lambda r: r.speed in (MIN, MAX) and r.external_noise == 'No',
+        validation=lambda r: (r.speed in (MIN, MAX) and r.external_noise == 'No' and r.date == '20261014'
                               and (r.internal_noise == 'No' or r.repetition == 4)),
         label=tape,
         fold=lambda r: r.magnets - 2),
     '7a_unbalance_with_tape': dict(
         description='Balanced {3, 6} vs unbalanced {4, 5}, all recordings with tape. Min and max speed, no external noise.',
-        train=lambda r: r.internal_noise == 'Yes' and r.speed > 0 and r.external_noise == 'No',
+        train=lambda r: r.internal_noise == 'Yes' and r.speed in (MIN, MAX) and r.external_noise == 'No',
         label=balance),
     '7b_unbalance_tape_mixed': dict(
         description='Balanced vs unbalanced. Min and max speed, no external noise, with and without tape in both sets.',
-        train=lambda r: r.speed > 0 and r.external_noise == 'No',
+        train=lambda r: r.speed in (MIN, MAX) and r.external_noise == 'No',
         label=balance),
     '7c_unbalance_unseen_tape': dict(
         description='Balanced vs unbalanced. Min and max speed, no external noise. Train without tape, validate only with tape.',
-        train=lambda r: no_internal(r) and r.speed > 0 and r.external_noise == 'No',
-        validation=lambda r: r.internal_noise == 'Yes' and r.speed > 0 and r.external_noise == 'No',
+        train=lambda r: no_internal(r) and r.speed in (MIN, MAX) and r.external_noise == 'No',
+        validation=lambda r: r.internal_noise == 'Yes' and r.speed in (MIN, MAX) and r.external_noise == 'No',
         label=balance),
     '8_unbalance_and_tape': dict(
         description='Balanced / unbalanced and tape / no tape (4 classes). Min and max speed, no external noise.',
-        train=lambda r: r.speed > 0 and r.external_noise == 'No',
+        train=lambda r: r.speed in (MIN, MAX) and r.external_noise == 'No',
         label=lambda r: balance(r) + '_' + tape(r)),
 }
 
@@ -164,7 +167,7 @@ def _parse_name(name):
     if len(fields) != 6:
         return None
     sample, speed, sensor, magnets, external, internal = fields
-    if (not sample.isdigit() or speed not in ('0', '1', '2') or sensor not in SENSORS
+    if (not sample.isdigit() or speed not in ('0', '1', '2', '3') or sensor not in SENSORS
             or magnets not in ('3', '4', '5', '6') or external not in ('Yes', 'No') or internal not in ('Yes', 'No')):
         return None
     return int(sample), int(speed), sensor, int(magnets), external, internal

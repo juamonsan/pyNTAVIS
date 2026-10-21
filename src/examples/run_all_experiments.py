@@ -10,6 +10,7 @@ Usage (from any folder):
     python run_all_experiments.py --experiments 2a_unbalance_min 3_load_min --sensors Mag
     python run_all_experiments.py --skip-existing                   # resume an interrupted run
     python run_all_experiments.py --list                            # list the available experiments
+    python run_all_experiments.py --check-folds                     # show which folds can be run with the current data
 
 Output (default: snn_dataset/experiments/script_output/, next to this script):
     summary.json, summary.csv          one row per finished experiment and sensor (updated after each of them)
@@ -27,6 +28,8 @@ Output (default: snn_dataset/experiments/script_output/, next to this script):
 
 If training fails in a fold (stuck at the chance level in both attempts), the fold is reported as failed, left out of
 the averages, and its training curves are saved as training_curves_failed.svg / .png to help reviewing the data.
+Folds without training or validation recordings in the current dataset (for example, combinations of medium speed that
+don't have NUM_FOLDS repetitions yet) are reported as skipped and also left out of the averages.
 """
 
 import argparse
@@ -56,7 +59,8 @@ from pyNAVIS import Functions, Loaders, MainSettings, Splitters
 
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, SCRIPT_PATH)
-from fan_dataset import EXPERIMENTS, NUM_FOLDS, SENSORS, build_experiment  # noqa: E402
+from fan_dataset import (EXPERIMENTS, NUM_FOLDS, SENSORS, EmptyFoldError, build_experiment, fold_report,  # noqa: E402
+                         parse_recordings, select)
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -93,7 +97,7 @@ RESTART_MARGIN = 0.05    # training accuracy must rise this much above the chanc
 MAX_ATTEMPTS = 2         # first attempt + one restart
 
 # Section 11: cross-validation
-CROSS_SESSION_FOLD = 4   # trains on 8 October, validates on 14 October
+CROSS_SESSION_FOLD = 4   # validates on 14 October, a session that is not used for training
 
 FIGURE_FORMATS = ['svg', 'png']
 PNG_DPI = 150
@@ -110,6 +114,19 @@ def log(message=''):
     if _log_file is not None:
         with open(_log_file, 'a', encoding='utf-8') as f:
             f.write(message + '\n')
+
+
+def remove_folder(path):
+    """Deletes a folder. Retries once (network and NTFS drives can be slow to release files), then only warns."""
+    for attempt in range(2):
+        try:
+            shutil.rmtree(path)
+            return
+        except OSError as error:
+            if attempt == 0:
+                time.sleep(2)
+            else:
+                log('    Warning: could not delete {} ({}). Delete it manually.'.format(path, error))
 
 
 def save_figure(fig, path_without_extension):
@@ -168,7 +185,8 @@ def make_loaders(output_path):
     """Loads train.npz and validation.npz from output_path and wraps them in DataLoaders (section 6)."""
     loaded = {}
     for split in ['train', 'validation']:
-        data = np.load(os.path.join(output_path, split + '.npz'))
+        with np.load(os.path.join(output_path, split + '.npz')) as npz:     # read everything and close the file
+            data = {key: npz[key] for key in npz.files}
         dataset = TensorDataset(torch.tensor(data['frames'], dtype=torch.float32),
                                 torch.tensor(data['labels'], dtype=torch.long))
         loaded[split] = (data, DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=(split == 'train')))
@@ -443,16 +461,29 @@ def plot_confusion_matrix(labels, window_predictions, class_names, title):
 
 def cross_validate(dataset_path, output_root, experiment, sensor, folds, keep_data):
     sensor_path = os.path.join(output_root, experiment, sensor)
+    report = fold_report(parse_recordings(dataset_path, verbose=False), experiment, sensor)
     fold_results = []
     for fold in folds:
         start = time.time()
         fold_path = os.path.join(sensor_path, 'fold{}'.format(fold))
         if os.path.isdir(fold_path):
-            shutil.rmtree(fold_path)
+            remove_folder(fold_path)
         source_path = os.path.join(fold_path, 'data', 'source')
         prepared_path = os.path.join(fold_path, 'data', 'prepared')
 
-        build_experiment(dataset_path, source_path, experiment, sensor, fold, verbose=False)
+        if report[fold]['missing_classes'] and report[fold]['validation']:
+            log('    Warning: fold {} has no validation recordings of class {}'.format(
+                fold, ', '.join(report[fold]['missing_classes'])))
+        try:
+            build_experiment(dataset_path, source_path, experiment, sensor, fold, verbose=False)
+        except EmptyFoldError as error:
+            log('  {} {} fold {}: SKIPPED - {}'.format(experiment, sensor, fold, error))
+            result = dict(fold=fold, training_failed=False, skipped=True, reason=str(error))
+            os.makedirs(fold_path, exist_ok=True)
+            with open(os.path.join(fold_path, 'results.json'), 'w') as f:
+                json.dump(result, f, indent=2)
+            fold_results.append(result)
+            continue
         prepare_dataset(source_path, prepared_path)
         train_npz, validation_npz, train_loader, validation_loader = make_loaders(prepared_path)
         class_names = list(train_npz['class_names'])
@@ -466,16 +497,17 @@ def cross_validate(dataset_path, output_root, experiment, sensor, folds, keep_da
             if error.history is not None:
                 save_figure(plot_training_curves(error.history, title + ' (training failed)'),
                             os.path.join(fold_path, 'training_curves_failed'))
-            result = dict(fold=fold, training_failed=True, error=str(error))
+            result = dict(fold=fold, training_failed=True, skipped=False, error=str(error))
             with open(os.path.join(fold_path, 'results.json'), 'w') as f:
                 json.dump(result, f, indent=2)
             fold_results.append(result)
             if not keep_data:
-                shutil.rmtree(os.path.join(fold_path, 'data'))
+                remove_folder(os.path.join(fold_path, 'data'))
             continue
 
         result, window_predictions = evaluate(net, validation_loader, validation_npz, prepared_path, best_epoch, seed)
-        result.update(fold=fold, training_failed=False, history=history)
+        result.update(fold=fold, training_failed=False, skipped=False, history=history,
+                      missing_validation_classes=report[fold]['missing_classes'])
         with open(os.path.join(fold_path, 'results.json'), 'w') as f:
             json.dump(result, f, indent=2)
         shutil.copy(os.path.join(prepared_path, 'snn_model.pt'), os.path.join(fold_path, 'snn_model.pt'))
@@ -490,13 +522,14 @@ def cross_validate(dataset_path, output_root, experiment, sensor, folds, keep_da
             experiment, sensor, fold, result['window_accuracy'], result['recording_accuracy'],
             result['num_validation_recordings'], best_epoch, seed, time.time() - start))
         if not keep_data:
-            shutil.rmtree(os.path.join(fold_path, 'data'))
+            remove_folder(os.path.join(fold_path, 'data'))
 
-    trained = [r for r in fold_results if not r['training_failed']]
+    trained = [r for r in fold_results if not r['training_failed'] and not r.get('skipped')]
     window = np.array([r['window_accuracy'] for r in trained])
     recording = np.array([r['recording_accuracy'] for r in trained])
     summary = dict(experiment=experiment, sensor=sensor, description=EXPERIMENTS[experiment]['description'], folds=folds,
                    failed_folds=[r['fold'] for r in fold_results if r['training_failed']],
+                   skipped_folds=[r['fold'] for r in fold_results if r.get('skipped')],
                    window_accuracy_mean=float(window.mean()) if trained else None,
                    window_accuracy_std=float(window.std()) if trained else None,
                    recording_accuracy_mean=float(recording.mean()) if trained else None,
@@ -525,13 +558,14 @@ def write_summary(output_root):
         row = dict(experiment=s['experiment'], sensor=s['sensor'],
                    window_accuracy_mean=s['window_accuracy_mean'], window_accuracy_std=s['window_accuracy_std'],
                    recording_accuracy_mean=s['recording_accuracy_mean'], recording_accuracy_std=s['recording_accuracy_std'],
-                   failed_folds=' '.join(map(str, s['failed_folds'])))
+                   failed_folds=' '.join(map(str, s['failed_folds'])),
+                   skipped_folds=' '.join(map(str, s.get('skipped_folds', []))))
+        done = lambda r: r is not None and not r['training_failed'] and not r.get('skipped')
         for fold in s['folds']:
             r = by_fold.get(fold)
-            row['fold{}_window_accuracy'.format(fold)] = None if r is None or r['training_failed'] else r['window_accuracy']
+            row['fold{}_window_accuracy'.format(fold)] = r['window_accuracy'] if done(r) else None
         row['cross_session_fold'] = CROSS_SESSION_FOLD if cross is not None else None
-        row['cross_session_recording_accuracy'] = (None if cross is None or cross['training_failed']
-                                                   else cross['recording_accuracy'])
+        row['cross_session_recording_accuracy'] = cross['recording_accuracy'] if done(cross) else None
         rows.append(row)
 
     with open(os.path.join(output_root, 'summary.json'), 'w') as f:
@@ -547,17 +581,19 @@ def write_summary(output_root):
 
 
 def print_summary(rows):
-    log('\n{:<28} {:<6} {:>22} {:>25} {:>14} {:>14}'.format(
-        'Experiment', 'Sensor', 'Window accuracy', 'Recording accuracy', 'Fold {} window'.format(CROSS_SESSION_FOLD), 'Failed folds'))
+    log('\n{:<30} {:<6} {:>22} {:>25} {:>14} {:>13} {:>14}'.format(
+        'Experiment', 'Sensor', 'Window accuracy', 'Recording accuracy', 'Fold {} window'.format(CROSS_SESSION_FOLD),
+        'Failed folds', 'Skipped folds'))
     for r in rows:
         if r['window_accuracy_mean'] is None:
-            accuracy = '{:>22} {:>25}'.format('all folds failed', '-')
+            accuracy = '{:>22} {:>25}'.format('no fold trained', '-')
         else:
             accuracy = '{:>14.3f} ± {:.3f} {:>17.3f} ± {:.3f}'.format(
                 r['window_accuracy_mean'], r['window_accuracy_std'], r['recording_accuracy_mean'], r['recording_accuracy_std'])
         cross = r.get('fold{}_window_accuracy'.format(CROSS_SESSION_FOLD))
-        log('{:<28} {:<6} {} {:>14} {:>14}'.format(r['experiment'], r['sensor'], accuracy,
-                                                   '-' if cross is None else '{:.3f}'.format(cross), r['failed_folds'] or '-'))
+        log('{:<30} {:<6} {} {:>14} {:>13} {:>14}'.format(r['experiment'], r['sensor'], accuracy,
+                                                          '-' if cross is None else '{:.3f}'.format(cross),
+                                                          r['failed_folds'] or '-', r.get('skipped_folds') or '-'))
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -580,6 +616,8 @@ def main():
     parser.add_argument('--keep-data', action='store_true',
                         help='keep the recordings and windows of every fold (can take several GB)')
     parser.add_argument('--list', action='store_true', help='list the available experiments and exit')
+    parser.add_argument('--check-folds', action='store_true',
+                        help='show the recordings of every fold of the selected experiments and exit (no training)')
     args = parser.parse_args()
 
     if args.list:
@@ -594,6 +632,21 @@ def main():
     if not os.path.isdir(args.dataset):
         parser.error('dataset folder not found: {}'.format(args.dataset))
     NUM_EPOCHS = args.epochs
+
+    if args.check_folds:
+        recordings = parse_recordings(args.dataset, verbose=True)
+        print('\n{:<30} {:<6} {}'.format('Experiment', 'Sensor', ' | '.join('fold {} train/valid'.format(k) for k in args.folds)))
+        for experiment in args.experiments:
+            for sensor in args.sensors:
+                report = fold_report(recordings, experiment, sensor)
+                cells = ['{:>9}/{:<4}{}'.format(report[k]['train'], report[k]['validation'], ' ' if report[k]['complete'] else '*')
+                         for k in args.folds]
+                notes = ['fold {}: {}'.format(k, 'no recordings' if not report[k]['validation'] else
+                                              'no ' + ', '.join(report[k]['missing_classes']))
+                         for k in args.folds if not report[k]['complete']]
+                print('{:<30} {:<6} {}  {}'.format(experiment, sensor, ' | '.join(cells), '; '.join(notes)))
+        print('\n* = incomplete fold (no validation recordings, or classes without validation recordings)')
+        return
 
     os.makedirs(args.output, exist_ok=True)
     _log_file = os.path.join(args.output, 'run_{}.log'.format(datetime.datetime.now().strftime('%Y%m%d_%H%M%S')))
@@ -612,17 +665,12 @@ def main():
 
         # Figure of the network, once per experiment (the class names come from the first prepared fold)
         if not os.path.isfile(os.path.join(args.output, experiment, 'snn_architecture.png')):
-            with open(glob.glob(os.path.join(args.output, experiment, sensor, 'fold*', 'results.json'))[0]) as f:
-                first = json.load(f)
-            class_names = first.get('class_names')
-            if class_names is None:     # training failed in that fold: take the classes from the experiment definition
-                from fan_dataset import parse_recordings, select
-                train, _ = select(parse_recordings(args.dataset, verbose=False), experiment, sensor, args.folds[0])
-                class_names = sorted({c for _, c in train})
+            train, _ = select(parse_recordings(args.dataset, verbose=False), experiment, sensor, args.folds[0])
+            class_names = sorted({c for _, c in train})     # same order as the class folders of prepare_dataset
             save_architecture(args.output, experiment, class_names)
         write_summary(args.output)
         log('  -> mean window accuracy: {}'.format(
-            'all folds failed' if summary['window_accuracy_mean'] is None
+            'no fold trained' if summary['window_accuracy_mean'] is None
             else '{:.3f} ± {:.3f}'.format(summary['window_accuracy_mean'], summary['window_accuracy_std'])))
 
     print_summary(write_summary(args.output))

@@ -12,13 +12,18 @@ Names of the first dataset version, without the internal field, are read as inte
 
 The metadata of every recording is also listed in Class_Table.csv (same columns as Class_Table.xlsx: Sample number,
 Fan Speed, Sensor, Magnets/Weight, External Noise, Internal Noise, Date). Fan Speed can be written as Stop (or 0), Min,
-Medium or Max, or as the numeric code 0-3. When the table exists, every file name is
+Mid (or Medium) or Max, or as the numeric code 0-3. When the table exists, every file name is
 checked against it, and files that don't match are skipped with a warning. The table also gives the recording date.
 
 The repetition of each recording is its position inside its combination (speed, sensor, magnets, external and internal
 noise) when sorted by sample number. Experiments use NUM_FOLDS-fold cross-validation over the repetitions: fold k
-validates on repetition k and trains on the others, so no recording is in both sets. Repetitions above NUM_FOLDS
-(the 5th repetition of the internal noise recordings) are always used for training.
+validates on repetition k and trains on the others, so no recording is in both sets. Repetitions above NUM_FOLDS are
+always used for training.
+
+Recording days (October 2026): min, max and stop without tape have repetitions 1-3 on day 8, 4 on day 14 and 5-6 on days
+19-20, so fold 4 validates on day 14, a session that is not used for training. The recordings with tape (min and max)
+are from day 14 (repetitions 1-5) and day 19 (repetition 6). Medium speed was recorded on days 19, 20 and 21. If a
+combination has fewer than NUM_FOLDS repetitions, its missing folds have no validation recordings (see fold_report).
 """
 
 import csv
@@ -34,7 +39,7 @@ NUM_FOLDS = 4
 STOP, MIN, MEDIUM, MAX = 0, 1, 2, 3
 SPEED_NAMES = {STOP: 'stop', MIN: 'min', MEDIUM: 'medium', MAX: 'max'}
 TABLE_NAME = 'Class_Table.csv'
-_TABLE_SPEEDS = {'stop': STOP, '0': STOP, 'min': MIN, '1': MIN, 'medium': MEDIUM, '2': MEDIUM, 'max': MAX, '3': MAX}
+_TABLE_SPEEDS = {'stop': STOP, '0': STOP, 'min': MIN, '1': MIN, 'medium': MEDIUM, 'mid': MEDIUM, '2': MEDIUM, 'max': MAX, '3': MAX}
 
 
 def balance(recording):
@@ -49,6 +54,10 @@ def tape(recording):
     return 'tape' if recording.internal_noise == 'Yes' else 'no_tape'
 
 
+class EmptyFoldError(ValueError):
+    """Raised by build_experiment when a fold has no training or no validation recordings."""
+
+
 def repetition_fold(recording):
     """Default fold of a recording: its repetition. Repetitions above NUM_FOLDS are always used for training (None)."""
     return recording.repetition if recording.repetition <= NUM_FOLDS else None
@@ -58,27 +67,50 @@ def repetition_fold(recording):
 # 'validation' defaults to 'train' when both sets use the same kind of recordings.
 # 'fold' gives the fold in which a recording is used for validation (None: always training). Defaults to repetition_fold.
 EXPERIMENTS = {
+    # Recording day
     '0_session_check': dict(
         description='Recording day: 8 October (last repetition) vs 14 October. Min and max speed, no external or internal noise. '
                     'Leave-one-load-out folds: fold k validates on the recordings with k + 2 magnets.',
         train=lambda r: no_internal(r) and r.speed in (MIN, MAX) and r.external_noise == 'No' and r.repetition in (3, 4),
         label=lambda r: 'day_' + r.date,
         fold=lambda r: r.magnets - 2),
+
+    # Speed
     '1_speed': dict(
         description='Speed (stop / min / medium / max, the speeds present in the dataset). All loads, no external or internal noise.',
         train=lambda r: no_internal(r) and r.external_noise == 'No',
         label=lambda r: SPEED_NAMES[r.speed]),
-    '2a_unbalance': dict(
-        description='Balanced {3, 6} vs unbalanced {4, 5}. Min and max speed, no external or internal noise.',
-        train=lambda r: no_internal(r) and r.speed in (MIN, MAX) and r.external_noise == 'No',
-        label=balance),
+    '1b_speed_moving': dict(
+        description='Speed of the moving fan (min / medium / max). All loads, no external or internal noise.',
+        train=lambda r: no_internal(r) and r.speed in (MIN, MEDIUM, MAX) and r.external_noise == 'No',
+        label=lambda r: SPEED_NAMES[r.speed]),
+    '1c_speed_unseen_tape': dict(
+        description='Speed of the moving fan (min / medium / max), no external noise. Train without tape, validate only with '
+                    'tape (the tape slows the fan by up to 6 %).',
+        train=lambda r: no_internal(r) and r.speed in (MIN, MEDIUM, MAX) and r.external_noise == 'No',
+        validation=lambda r: r.internal_noise == 'Yes' and r.speed in (MIN, MEDIUM, MAX) and r.external_noise == 'No',
+        label=lambda r: SPEED_NAMES[r.speed]),
+
+    # Unbalance: balanced {3, 6} vs unbalanced {4, 5}
     '2a_unbalance_min': dict(
         description='Balanced {3, 6} vs unbalanced {4, 5}. Min speed only, no external or internal noise.',
         train=lambda r: no_internal(r) and r.speed == MIN and r.external_noise == 'No',
         label=balance),
+    '2a_unbalance_mid': dict(
+        description='Balanced {3, 6} vs unbalanced {4, 5}. Medium speed only, no external or internal noise.',
+        train=lambda r: no_internal(r) and r.speed == MEDIUM and r.external_noise == 'No',
+        label=balance),
     '2a_unbalance_max': dict(
         description='Balanced {3, 6} vs unbalanced {4, 5}. Max speed only, no external or internal noise.',
         train=lambda r: no_internal(r) and r.speed == MAX and r.external_noise == 'No',
+        label=balance),
+    '2a_unbalance': dict(
+        description='Balanced {3, 6} vs unbalanced {4, 5}. Min and max speed, no external or internal noise.',
+        train=lambda r: no_internal(r) and r.speed in (MIN, MAX) and r.external_noise == 'No',
+        label=balance),
+    '2a_unbalance_all_speeds': dict(
+        description='Balanced {3, 6} vs unbalanced {4, 5}. Min, medium and max speed together, no external or internal noise.',
+        train=lambda r: no_internal(r) and r.speed in (MIN, MEDIUM, MAX) and r.external_noise == 'No',
         label=balance),
     '2b_unbalance_noise': dict(
         description='Balanced vs unbalanced. Min and max speed, with and without external noise in both sets. No internal noise.',
@@ -99,9 +131,21 @@ EXPERIMENTS = {
         train=lambda r: no_internal(r) and r.speed == MAX and r.external_noise == 'No',
         validation=lambda r: no_internal(r) and r.speed == MIN and r.external_noise == 'No',
         label=balance),
+    '2e_unbalance_unseen_mid': dict(
+        description='Balanced vs unbalanced, no external or internal noise. Train at min and max speed, validate at medium '
+                    'speed (a speed the network has never seen).',
+        train=lambda r: no_internal(r) and r.speed in (MIN, MAX) and r.external_noise == 'No',
+        validation=lambda r: no_internal(r) and r.speed == MEDIUM and r.external_noise == 'No',
+        label=balance),
+
+    # Load (number of magnets)
     '3_load_min': dict(
         description='Number of magnets (3 / 4 / 5 / 6). Min speed, no external or internal noise.',
         train=lambda r: no_internal(r) and r.speed == MIN and r.external_noise == 'No',
+        label=lambda r: str(r.magnets) + '_magnets'),
+    '3_load_mid': dict(
+        description='Number of magnets (3 / 4 / 5 / 6). Medium speed, no external or internal noise.',
+        train=lambda r: no_internal(r) and r.speed == MEDIUM and r.external_noise == 'No',
         label=lambda r: str(r.magnets) + '_magnets'),
     '3_load_max': dict(
         description='Number of magnets (3 / 4 / 5 / 6). Max speed, no external or internal noise.',
@@ -111,17 +155,21 @@ EXPERIMENTS = {
         description='Number of magnets (3 / 4 / 5 / 6). Min and max speed together, no external or internal noise.',
         train=lambda r: no_internal(r) and r.speed in (MIN, MAX) and r.external_noise == 'No',
         label=lambda r: str(r.magnets) + '_magnets'),
+
+    # Machine state
     '4_state': dict(
         description='Machine state: stop / <speed>-balanced / <speed>-unbalanced for every speed present (min, medium, max). No external or internal noise.',
         train=lambda r: no_internal(r) and r.external_noise == 'No',
         label=lambda r: 'stop' if r.speed == STOP else SPEED_NAMES[r.speed] + '_' + balance(r)),
+
+    # External noise (tapping on the table)
     '5_noise': dict(
         description='External noise (tapping) vs no external noise. All speeds and loads, no internal noise.',
         train=no_internal,
         label=lambda r: 'tapping' if r.external_noise == 'Yes' else 'no_tapping'),
 
-    # Internal noise (tape touching the blades). Recorded only at min and max speed, all on 14 October.
-    # The experiments that say "min and max speed" don't use the medium speed recordings.
+    # Internal noise (tape touching the blades): min and max speed on days 14 and 19, mid speed on days 19-21.
+    # At min and max speed, almost all tape recordings are from day 14: see 0_session_check and 6c_tape_same_day
     '6a_tape': dict(
         description='Internal noise (tape) vs no internal noise. Min and max speed, all loads, no external noise.',
         train=lambda r: r.speed in (MIN, MAX) and r.external_noise == 'No',
@@ -139,6 +187,13 @@ EXPERIMENTS = {
                               and (r.internal_noise == 'No' or r.repetition == 4)),
         label=tape,
         fold=lambda r: r.magnets - 2),
+    '6d_tape_mid': dict(
+        description='Internal noise (tape) vs no internal noise at medium speed, no external noise. Both classes were '
+                    'recorded on the same days (19, 20 and 21 October), so the recording day is not a shortcut.',
+        train=lambda r: r.speed == MEDIUM and r.external_noise == 'No',
+        label=tape),
+
+    # Unbalance with tape
     '7a_unbalance_with_tape': dict(
         description='Balanced {3, 6} vs unbalanced {4, 5}, all recordings with tape. Min and max speed, no external noise.',
         train=lambda r: r.internal_noise == 'Yes' and r.speed in (MIN, MAX) and r.external_noise == 'No',
@@ -152,6 +207,13 @@ EXPERIMENTS = {
         train=lambda r: no_internal(r) and r.speed in (MIN, MAX) and r.external_noise == 'No',
         validation=lambda r: r.internal_noise == 'Yes' and r.speed in (MIN, MAX) and r.external_noise == 'No',
         label=balance),
+    '7d_unbalance_mid_unseen_tape': dict(
+        description='Balanced vs unbalanced at medium speed, no external noise. Train without tape, validate only with tape.',
+        train=lambda r: no_internal(r) and r.speed == MEDIUM and r.external_noise == 'No',
+        validation=lambda r: r.internal_noise == 'Yes' and r.speed == MEDIUM and r.external_noise == 'No',
+        label=balance),
+
+    # Unbalance and tape together
     '8_unbalance_and_tape': dict(
         description='Balanced / unbalanced and tape / no tape (4 classes). Min and max speed, no external noise.',
         train=lambda r: r.speed in (MIN, MAX) and r.external_noise == 'No',
@@ -279,6 +341,23 @@ def select(recordings, experiment, sensor, fold):
     return train, validation
 
 
+def fold_report(recordings, experiment, sensor):
+    """
+    Returns, for every fold of an experiment and sensor, the number of training and validation recordings and the
+    classes that have no validation recordings.
+
+    Returns:
+            dict: {fold: dict(train=int, validation=int, missing_classes=[str], complete=bool)}
+    """
+    report = {}
+    for fold in range(1, NUM_FOLDS + 1):
+        train, validation = select(recordings, experiment, sensor, fold)
+        missing = sorted({c for _, c in train} - {c for _, c in validation})
+        report[fold] = dict(train=len(train), validation=len(validation), missing_classes=missing,
+                            complete=bool(train) and bool(validation) and not missing)
+    return report
+
+
 def _link_or_copy(source, destination):
     try:
         os.link(source, destination)
@@ -308,6 +387,13 @@ def build_experiment(dataset_path, output_path, experiment, sensor, fold, verbos
         raise ValueError('fold should be between 1 and {}'.format(NUM_FOLDS))
 
     train, validation = select(parse_recordings(dataset_path, verbose=verbose), experiment, sensor, fold)
+    if not train or not validation:
+        raise EmptyFoldError('{} ({}, fold {}) has {} training and {} validation recordings: this fold cannot be run with '
+                             'the current dataset.'.format(experiment, sensor, fold, len(train), len(validation)))
+    missing = sorted({c for _, c in train} - {c for _, c in validation})
+    if missing:
+        print('[fan_dataset] > Warning: {} ({}, fold {}) has no validation recordings of class {}'.format(
+            experiment, sensor, fold, ', '.join(missing)))
 
     if os.path.isdir(output_path):
         shutil.rmtree(output_path)

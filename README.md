@@ -85,7 +85,7 @@ Scripts for the NTAS-Fan experiments (in [`src/examples`](src/examples)):
 | [`fan_dataset.py`](src/examples/fan_dataset.py) | Parses the dataset file names and defines the experiments and their 4 folds |
 | [`run_all_experiments.py`](src/examples/run_all_experiments.py) | Runs the cross-validation of all experiments and saves the results and figures |
 | [`run_baseline.py`](src/examples/run_baseline.py) | Non-spiking baseline (logistic regression) with the same windows and folds |
-| [`run_rate_only.py`](src/examples/run_rate_only.py), [`run_rate_normalized.py`](src/examples/run_rate_normalized.py) | Event-rate-only checks and data-rate figures |
+| [`run_rate_only.py`](src/examples/run_rate_only.py), [`run_rate_normalized.py`](src/examples/run_rate_normalized.py) | Event-rate-only classifiers and AER data rates |
 | [`plot_paper_figures.py`](src/examples/plot_paper_figures.py), [`plot_paper_signal_examples.py`](src/examples/plot_paper_signal_examples.py) | Figures of the NTAS-Fan paper |
 | [`load_three_axis_AEDAT.py`](src/examples/load_three_axis_AEDAT.py) | Minimal three-axis example |
 

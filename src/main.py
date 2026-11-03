@@ -61,8 +61,8 @@ plt.show()
 
 
 
-#%% Load three-axis file example > 1 s accelerometer recording (jAER chip NUS_3Axxis_42ch)
-# Each axis uses 43 channels: 42 active ones plus an always-empty channel that separates it from the next axis,
+#%% Load three-axis file example > 1.55 s NTAS accelerometer recording (jAER chip NUS_3Axxis_42ch)
+# Each axis uses a 43-channel slot: 42 active channels plus a last channel that is always empty,
 # so num_channels=43. jAER saves 4-byte addresses with a 1 us tick.
 
 # settings = MainSettings(num_channels=43, mono_stereo=MainSettings.THREE_AXIS, on_off_both=1, address_size=4, ts_tick=1, bin_size=20000)

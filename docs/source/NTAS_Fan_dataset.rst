@@ -72,7 +72,7 @@ Script                                              Purpose
 ``fan_dataset.py``                                  Parses the file names and ``Class_Table.csv``, and defines the experiments and their 4 folds.
 ``run_all_experiments.py``                          Runs the cross-validation of all the experiments and saves the results and figures.
 ``run_baseline.py``                                 Non-spiking baseline (logistic regression) with the same windows and folds.
-``run_rate_only.py``, ``run_rate_normalized.py``    Event-rate-only checks and data-rate figures.
+``run_rate_only.py``, ``run_rate_normalized.py``    Event-rate-only classifiers and AER data rates.
 ``plot_paper_figures.py``                           Figures of the experiment results.
 ``plot_paper_signal_examples.py``                   Views of one recording (spikegram, sonogram, histogram, average activity).
 =================================================== ===============================================================================

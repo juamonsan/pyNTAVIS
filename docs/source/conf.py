@@ -18,12 +18,12 @@ master_doc = 'index'
 
 # -- Project information -----------------------------------------------------
 
-project = 'pyNAVIS'
-copyright = '2018, Juan P. Dominguez-Morales'
-author = 'Juan P. Dominguez-Morales'
+project = 'pyNTAVIS'
+copyright = '2018, Juan P. Dominguez-Morales (pyNAVIS); 2026, Juan M. Montes-Sanchez (pyNTAVIS three-axis additions)'
+author = 'Juan P. Dominguez-Morales, Juan M. Montes-Sanchez'
 
 # The full version, including alpha/beta/rc tags
-release = '1.2.5'
+release = '1.0.0'  # based on pyNAVIS 1.2.5
 
 
 # -- General configuration ---------------------------------------------------

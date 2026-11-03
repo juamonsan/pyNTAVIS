@@ -12,5 +12,5 @@
    Installing
    General information
    Getting started
-   pyNAVIS  
+   pyNTAVIS
    Contributing

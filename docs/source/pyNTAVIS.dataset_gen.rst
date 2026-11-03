@@ -1,7 +1,7 @@
-pyNAVIS.dataset\_gen
-===========================
+pyNTAVIS.dataset\_gen
+======================
 
-.. automodule:: pyNAVIS.dataset_gen
+.. automodule:: pyNTAVIS.dataset_gen
 
 
 

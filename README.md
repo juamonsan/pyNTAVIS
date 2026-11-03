@@ -1,6 +1,7 @@
 ## pyNTAVIS: an open-source cross-platform Neuromorphic Tri-axial and Auditory VISualizer
 
 <p>
+<img align="right" height="180" width="180" src="images/wiki-images/pyntavis_logo.png" alt="pyNTAVIS logo"/>
 <a href="http://www.gnu.org/licenses/gpl-3.0"><img src="https://img.shields.io/badge/License-GPL%20v3-blue.svg"/></a>
 <a href="https://pyntavis.readthedocs.io/en/latest/"><img src="https://readthedocs.org/projects/pyntavis/badge/?version=latest"/></a>
 </p>

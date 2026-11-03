@@ -73,8 +73,8 @@ source_suffix = {
     '.md': 'markdown',
 }
 
-html_logo = 'pyNAVIS_200.png'
-html_favicon = 'pyNAVIS_favicon.png'
+html_logo = 'pyNTAVIS_200.png'   # generated with images/wiki-images/make_pyntavis_logo.py
+html_favicon = 'pyNTAVIS_favicon.png'
 html_compact_lists = False
 #pygments_style = 'sphinx'
 

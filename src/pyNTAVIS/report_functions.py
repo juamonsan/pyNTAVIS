@@ -1,3 +1,6 @@
+# Part of pyNAVIS (GPL v3). Modified in 2026 by Juan M. Montes-Sanchez for pyNTAVIS, a fork of pyNAVIS:
+# package renamed to pyNTAVIS and three-axis (NTAS) support added.
+
 import datetime
 import os
 
@@ -138,10 +141,10 @@ class ReportFunctions:
                 plt.close(fig)
 
             d = pdf.infodict()
-            d['Title'] = 'pyNAVIS report'
+            d['Title'] = 'pyNTAVIS report'
             d['Author'] = 'Juan P. Dominguez-Morales'
-            d['Subject'] = 'pyNAVIS report'
-            d['Keywords'] = 'pyNAVIS'
+            d['Subject'] = 'pyNTAVIS report'
+            d['Keywords'] = 'pyNTAVIS'
             d['CreationDate'] = datetime.datetime.today()
             d['ModDate'] = datetime.datetime.today()
 

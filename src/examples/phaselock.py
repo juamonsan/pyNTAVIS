@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from pyNAVIS import *
+from pyNTAVIS import *
 
 
 def run(path, settings, delay = 0):

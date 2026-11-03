@@ -1,3 +1,6 @@
+# Part of pyNAVIS (GPL v3). Modified in 2026 by Juan M. Montes-Sanchez for pyNTAVIS, a fork of pyNAVIS:
+# package renamed to pyNTAVIS.
+
 import numpy as np
 
 

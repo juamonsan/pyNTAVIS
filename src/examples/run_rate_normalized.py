@@ -16,7 +16,7 @@ import numpy as np
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, SCRIPT_PATH)
 import fan_dataset as fd
-from pyNAVIS import Functions, Loaders, MainSettings, Splitters
+from pyNTAVIS import Functions, Loaders, MainSettings, Splitters
 
 D = os.path.join(SCRIPT_PATH, 'snn_dataset', 'Fan_NTAS_Dataset')
 s = MainSettings(num_channels=43, mono_stereo=2, on_off_both=1, address_size=4, ts_tick=1, verbose=False)

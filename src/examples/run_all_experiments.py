@@ -55,7 +55,7 @@ import snntorch as snn
 from snntorch import functional as SF
 from snntorch import surrogate
 
-from pyNAVIS import Functions, Loaders, MainSettings, Splitters
+from pyNTAVIS import Functions, Loaders, MainSettings, Splitters
 
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, SCRIPT_PATH)

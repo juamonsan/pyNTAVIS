@@ -18,6 +18,7 @@ pyNTAVIS is a fork of <a href="https://github.com/jpdominguez/pyNAVIS">pyNAVIS</
 
 | | pyNAVIS | pyNTAVIS |
 |---|---|---|
+| Package name | `import pyNAVIS` | `import pyNTAVIS` (both can be installed side by side) |
 | Sensors | NAS (mono or stereo cochlea) | NAS, plus NTAS (tri-axial accelerometer or magnetometer) |
 | `MainSettings.mono_stereo` | 0 (mono), 1 (stereo) | 0, 1, or `MainSettings.THREE_AXIS` (2) |
 | Address layout | one block per cochlea | one block of `num_channels * (on_off_both + 1)` addresses per source, in X, Y, Z order |
@@ -27,7 +28,7 @@ pyNTAVIS is a fork of <a href="https://github.com/jpdominguez/pyNAVIS">pyNAVIS</
 | Examples | NAS tutorials | three-axis tutorial, SNN training notebook, Fan NTAS experiment scripts |
 
 <p align="justify">
-New helper properties in <code>MainSettings</code>: <code>num_sources</code>, <code>addresses_per_source</code> and <code>source_labels</code>. Existing mono and stereo code keeps working unchanged; the only visible change is that <code>Plots.average_activity</code> returns one array per source followed by the figure, which for mono and stereo files is the same as before.
+New helper properties in <code>MainSettings</code>: <code>num_sources</code>, <code>addresses_per_source</code> and <code>source_labels</code>. Existing mono and stereo code keeps working after replacing <code>from pyNAVIS import</code> with <code>from pyNTAVIS import</code>; the only other visible change is that <code>Plots.average_activity</code> returns one array per source followed by the figure, which for mono and stereo files is the same as before.
 </p>
 
 
@@ -45,7 +46,7 @@ The figures below were made with the plain pyNTAVIS functions on the example fil
 </p>
 
 ```python
-from pyNAVIS import *
+from pyNTAVIS import *
 
 settings = MainSettings(num_channels=43, mono_stereo=MainSettings.THREE_AXIS, on_off_both=1,
                         address_size=4, ts_tick=1, bin_size=5000)
@@ -106,11 +107,10 @@ NTAS-Fan contains 581 AER recordings (5–5.6 s each) of a 120 mm PC cooling fan
 <h2>Installing</h2>
 
 <p align="justify">
-pyNTAVIS is installed from this repository; it keeps the package name <code>pyNAVIS</code>, so <b>uninstall the PyPI pyNAVIS first</b>, as it does not support three-axis files:
+pyNTAVIS is installed from this repository. Its package is named <code>pyNTAVIS</code>, so it can be installed next to the PyPI <code>pyNAVIS</code> (the original audio-only version, without three-axis support) without replacing it:
 </p>
 
 ```
-pip uninstall -y pyNAVIS
 git clone https://github.com/juamonsan/pyNTAVIS.git
 cd pyNTAVIS/src
 pip install -e .
@@ -118,7 +118,7 @@ pip install torch snntorch        # only for the SNN notebook and scripts
 ```
 
 <p align="justify">
-In Google Colab, the first cell of each notebook does this automatically. The general pyNAVIS documentation is at <a href="https://pynavis.readthedocs.io/en/latest/">ReadTheDocs</a>; it does not cover the three-axis additions, which are documented in the docstrings and the notebooks.
+In Google Colab, the first cell of each notebook does this automatically. The general pyNAVIS documentation is at <a href="https://pynavis.readthedocs.io/en/latest/">ReadTheDocs</a> (replace <code>pyNAVIS</code> with <code>pyNTAVIS</code> in its import examples); it does not cover the three-axis additions, which are documented in the docstrings and the notebooks. The <code>docs/</code> folder of this repository is the original pyNAVIS documentation and has not been updated.
 </p>
 
 

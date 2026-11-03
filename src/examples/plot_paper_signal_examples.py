@@ -1,9 +1,9 @@
 """
-Compact figure for the article with the four views of a three-axis recording offered by pyNAVIS: spikegram, sonogram,
+Compact figure for the article with the four views of a three-axis recording offered by pyNTAVIS: spikegram, sonogram,
 histogram and average activity (the same views as pyNTAVIS_3_axis_aedats_Tutorial.ipynb), sized for one IEEE column.
 
-The data of every panel is computed with the local pyNAVIS (Loaders, Functions, Splitters and Plots with
-return_data / returned arrays); only the layout is drawn here, because the pyNAVIS plot functions create one full-size
+The data of every panel is computed with pyNTAVIS (Loaders, Functions, Splitters and Plots with
+return_data / returned arrays); only the layout is drawn here, because the pyNTAVIS plot functions create one full-size
 figure each.
 
 Usage:
@@ -23,7 +23,7 @@ from matplotlib.colors import LinearSegmentedColormap, PowerNorm
 from matplotlib.lines import Line2D
 import numpy as np
 
-from pyNAVIS import Functions, Loaders, MainSettings, Plots, Splitters
+from pyNTAVIS import Functions, Loaders, MainSettings, Plots, Splitters
 
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_RECORDING = os.path.join(SCRIPT_PATH, 'snn_dataset', 'Fan_NTAS_Dataset', '0331_3_Accel_5_No_Yes.aedat')
@@ -59,7 +59,7 @@ def main():
     parser.add_argument('--output', default=os.path.join(SCRIPT_PATH, 'snn_dataset', 'experiments', 'script_output', 'paper_figures'))
     args = parser.parse_args()
 
-    # ---- Data, computed with pyNAVIS -----------------------------------------------------------------------------
+    # ---- Data, computed with pyNTAVIS ----------------------------------------------------------------------------
     settings = MainSettings(num_channels=43, mono_stereo=MainSettings.THREE_AXIS, on_off_both=1, address_size=4,
                             ts_tick=1, bin_size=int(args.bin * 1000), verbose=False)
     recording = Loaders.loadAEDAT(args.recording, settings)
@@ -73,7 +73,7 @@ def main():
     sonogram = Plots.sonogram(excerpt, settings, return_data=True)                    # [addresses, bins]
     histogram, figure = Plots.histogram(recording, settings); plt.close(figure)        # whole recording
     *activity, figure = Plots.average_activity(excerpt, settings); plt.close(figure)  # one array per axis
-    plt.style.use('default')     # the pyNAVIS plot functions change the global style
+    plt.style.use('default')     # the pyNTAVIS plot functions change the global style
 
     block = settings.addresses_per_source
     num_addresses = block * settings.num_sources

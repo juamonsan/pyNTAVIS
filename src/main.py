@@ -1,7 +1,7 @@
 import os
 
 from examples import gen_random, gen_shift, gen_sweep, load_stereo_AEDAT, load_three_axis_AEDAT, manual_split, stereo_to_mono, mono_to_stereo, phaselock, load_stereo_localization_AEDAT, load_stereo_localization_CSV, load_stereo_localization_ZynqGrabber
-from pyNAVIS import Loaders, Plots, MainSettings, Functions
+from pyNTAVIS import Loaders, Plots, MainSettings, Functions
 import matplotlib.pyplot as plt
 
 

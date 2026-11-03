@@ -7,9 +7,9 @@ with open('HISTORY.md') as history_file:
     HISTORY = history_file.read()
 """
 setup_args = dict(
-    name='pyNAVIS',
-    version='1.2.5+ntas.1',
-    description='Useful tools to analyze and process spiking information from neuromorphic auditory sensors (NAS) and from the Neuromorphic Tri-Axial Sensor (NTAS). pyNTAVIS fork of pyNAVIS.',
+    name='pyNTAVIS',
+    version='1.0.0',  # based on pyNAVIS 1.2.5
+    description='Useful tools to analyze and process spiking information from neuromorphic auditory sensors (NAS) and from the Neuromorphic Tri-Axial Sensor (NTAS). Fork of pyNAVIS.',
     long_description_content_type="text/markdown",
     long_description=README,
     license='GPL',

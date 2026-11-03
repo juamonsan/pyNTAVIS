@@ -5,7 +5,9 @@
 ##    This file is part of pyNAVIS.                                            ##
 ##                                                                             ##
 ##    Modified in 2026 by Juan M. Montes-Sanchez for pyNTAVIS, a fork          ##
-##    of pyNAVIS: package renamed to pyNTAVIS.                                 ##
+##    of pyNAVIS: package renamed to pyNTAVIS, and fixed the histogram         ##
+##    dataset (saved the figure with the counts), and the timestamps and       ##
+##    the file names (double .aedat extension) of the phaselock dataset.       ##
 ##                                                                             ##
 ##    pyNAVIS is free software: you can redistribute it and/or modify          ##
 ##    it under the terms of the GNU General Public License as published by     ##
@@ -25,6 +27,7 @@
 import os
 import time
 import matplotlib
+import matplotlib.pyplot as plt
 import numpy as np
 
 from .functions import Functions
@@ -111,10 +114,11 @@ class DatasetGenerators:
 
         for file in files:
             spikes_file = Loaders.loadAEDAT(file, settings)
-            #sonogram_data = Plots.sonogram(spikes_file.addresses, spikes_file.timestamps, settings, return_data = True)
-            #matplotlib.image.imsave(os.path.join(path_output_folder, os.path.basename(file)) + '.png', sonogram_data)
+            # save_AEDAT divides the timestamps by ts_tick, so they have to be adapted first
+            Functions.adapt_timestamps(spikes_file, settings)
             phaselocked_spikes = Functions.phase_lock(spikes_file, settings)
-            Savers.save_AEDAT(phaselocked_spikes, os.path.join(path_output_folder, os.path.basename(file)), settings)
+            # save_AEDAT adds the .aedat extension
+            Savers.save_AEDAT(phaselocked_spikes, os.path.join(path_output_folder, os.path.splitext(os.path.basename(file))[0]), settings)
             
             if verbose == True:
                 progress += 1
@@ -156,7 +160,9 @@ class DatasetGenerators:
         for file in files:
             spikes_file = Loaders.loadAEDAT(file, settings)
             Functions.adapt_timestamps(spikes_file, settings)
-            histogram_data = Plots.histogram(spikes_file, settings)
+            # Plots.histogram returns the counts and the figure
+            histogram_data, histogram_fig = Plots.histogram(spikes_file, settings)
+            plt.close(histogram_fig)
             np.savetxt(os.path.join(path_output_folder, os.path.basename(file)) + ".csv", histogram_data, delimiter=",", fmt='%d')
             
             if verbose == True:

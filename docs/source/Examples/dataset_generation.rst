@@ -7,7 +7,7 @@ With this functionality you can generate a set of sonogram images from a folder 
 
 .. prompt:: python \
 
-    from pyNAVIS import *
+    from pyNTAVIS import *
 
     input_folder            = 'path/to/input_folder'    # folder that contains the files with spikes
     output_folder           = 'path/to/output_folder'   # folder where the sonograms will be saved

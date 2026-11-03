@@ -2,8 +2,8 @@
 Generate new files with spiking information
 ******************************************************
 
-``pyNAVIS`` has three different functionalities to generate new custom artificial files with spiking information.
-These are described in the :doc:`Generators class <../pyNAVIS.generators>`:
+``pyNTAVIS`` has three different functionalities to generate new custom artificial files with spiking information.
+These are described in the :doc:`Generators class <../pyNTAVIS.generators>`:
 
 * :ref:`random_addrs() <random_addrs>`
 * :ref:`shift() <shift>`
@@ -20,7 +20,7 @@ The spike rate, the length of the file and the number of channels can be specifi
 
 .. prompt:: python \
 
-    from pyNAVIS import *
+    from pyNTAVIS import *
     
     f = 1000        # frequency of the spikes generated per channel.
     n_ch = 64       # number of channels (or addresses)
@@ -60,7 +60,7 @@ To use this function, you can follow the next example:
 
 .. prompt:: python \
 
-    from pyNAVIS import *
+    from pyNTAVIS import *
     
     f = 10          # number of spikes per channel.
     n_ch = 64       # number of channels (or addresses)
@@ -92,7 +92,7 @@ See the following example:
 
 .. prompt:: python \
 
-    from pyNAVIS import *
+    from pyNTAVIS import *
     
     f = 5           # number of spikes per channel and shift.
     c = 5           # total number of cycles to perform

@@ -16,7 +16,7 @@ See the following example:
 
 .. prompt:: python \
 
-    from pyNAVIS import *
+    from pyNTAVIS import *
 
     settings = MainSettings(num_channels=64, mono_stereo=0, on_off_both=1, address_size=2, ts_tick=0.2, bin_size=10000)
     spikes_info = Loaders.loadAEDAT('path/to/file/name.aedat', settings)

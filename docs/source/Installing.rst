@@ -2,50 +2,35 @@
 Installing
 **********
 
-This section describes how to install and set up ``pyNAVIS``.
+This section describes how to install and set up ``pyNTAVIS``.
 
-First, some :ref:`requirements <requirements>` need to be installed. If you already have a running Python3 environment, 
-you can skip this step and move either to the :ref:`User Installation <user_install>` or to the :ref:`Developer Installation <dev_install>`.
+First, some :ref:`requirements <requirements>` need to be installed. If you already have a running Python 3 environment,
+you can skip this step and move to the :ref:`installation <user_install>`.
 
 
 
 
  .. _requirements:
- 
+
 Requirements
 ================
 
-``pyNAVIS`` runs under Python3, so first you need to install and set up a Python3 environment.
-
-
-For doing so, we recommend using Anaconda, which is a free and open-source distribution of the Python and R 
-programming languages that aims to simplify package management and deployment. We recommend installing Anaconda 3.7, 
-which can be downloaded from `their website <https://www.anaconda.com/distribution/>`_.
-
-
-After installing Anaconda, let's create a new Python environment, which is a directory that contains a specific collection of conda packages.
+``pyNTAVIS`` runs under Python 3.10 or later, so first you need to install and set up a Python 3 environment.
 
 .. note::
-   Creating a Python environment is not necessary, but it is highly recommended. Environments act as a sand box where you can install and play around without spoiling the base Python installation. 
+   Creating a Python environment is not necessary, but it is highly recommended. Environments act as a sand box where you can install and play around without spoiling the base Python installation.
 
 
-For creating a Python environment, open a terminal (or the Anaconda Prompt if you are using Windows) and run:
+To create an environment with the ``venv`` module of Python, open a terminal and run:
 
 .. prompt:: bash $
 
-   conda create -n pyNAVIS_env python=3.7
+   python3 -m venv .venv
+   source .venv/bin/activate
 
-Where pyNAVIS_env is the name of the environment and can be changed to your liking. After that, activate your environment by doing:
+On Windows, activate it with ``.venv\Scripts\activate`` instead. Conda environments (``conda create -n pyNTAVIS_env python=3.12``, then ``conda activate pyNTAVIS_env``) work as well.
 
-.. prompt:: bash $
-
-   conda activate pyNAVIS_env
-
-.. note::
-   `Spyder <https://www.spyder-ide.org/>`_, which is a well-known Python IDE is installed together with Anaconda.
-
-
-After that, head over to the :ref:`User Installation <user_install>` or to the :ref:`Developer Installation <dev_install>` instructions.
+After that, head over to the :ref:`installation <user_install>` instructions.
 
 
 
@@ -54,66 +39,56 @@ After that, head over to the :ref:`User Installation <user_install>` or to the :
 
 
 .. _user_install:
- 
-User installation
-=================
 
-To install ``pyNAVIS``, run the following line in the terminal:
+Installation
+============
+
+``pyNTAVIS`` is not distributed on PyPI: it is installed from its `GitHub repository <https://github.com/juamonsan/pyNTAVIS>`_. Clone or download the repository and install the package in editable mode, so that changes in the code are used directly:
 
 .. prompt:: bash $
 
-   pip install pyNAVIS
+   git clone https://github.com/juamonsan/pyNTAVIS.git
+   cd pyNTAVIS/src
+   pip install -e .
 
-This will automatically install all the dependencies needed to use this package, which are ``numpy``, ``scipy`` and ``matplotlib``.
-
-You can now start using ``pyNAVIS``. Head over to the :doc:`Getting Started section <Getting started>` to introduce you to its functionalities and how to use it. Some other useful commands can be seen in the following note:
+This will automatically install the dependencies needed to use this package, which are ``numpy``, ``scipy`` and ``matplotlib``. The exact versions used during development are listed in ``src/requirements.txt``.
 
 .. note::
-   To update pyNAVIS to the latest version, use the following command:
+   The package is named ``pyNTAVIS``, so it can be installed next to the original ``pyNAVIS`` from PyPI (the audio-only version, without three-axis support) without replacing it. Code written for pyNAVIS works with pyNTAVIS after replacing ``from pyNAVIS import`` with ``from pyNTAVIS import``.
+
+.. note::
+   To update pyNTAVIS, pull the latest changes of the repository (``git pull``). Since it is installed in editable mode, no reinstall is needed.
+
+   To uninstall pyNTAVIS use the following command:
 
    .. prompt:: bash $
 
-      pip install --upgrade pyNAVIS
+      pip uninstall pyNTAVIS
 
-   To install a specific version of pyNAVIS use the following command:
 
-   .. prompt:: bash $
+.. _snn_install:
 
-      pip install pyNAVIS==version
-
-   To upgrade an already installed pyNAVIS package to the latest from PyPi use the following command:
-
-   .. prompt:: bash $
-
-      pip install --upgrade pyNAVIS
-
-   To uninstall pyNAVIS use the following command:
-
-   .. prompt:: bash $
-
-      pip uninstall pyNAVIS
-
-.. _dev_install:
- 
-Developer installation
+Optional: SNN training
 ======================
 
-Clone or download `the repository <https://github.com/jpdominguez/pyNAVIS>`_. After that, head to: 
-
-.. prompt:: bash $
-   
-   cd /path/to/project/src
-
-And run the following line from your terminal to install all the dependencies:
+The SNN training notebook and the NTAS-Fan experiment scripts also need PyTorch and snnTorch:
 
 .. prompt:: bash $
 
-   pip install -r requirements.txt
+   pip install torch snntorch
+
+
+.. _colab_install:
+
+Google Colab
+============
+
+The notebooks in ``src/examples`` (see :doc:`Getting started <Getting started>`) can be opened in Google Colab. Their first cell clones the repository and installs ``pyNTAVIS`` (and snnTorch, when needed) automatically.
 
 
 .. note::
-   Now you have everything set up to code. Take a look at the ``main.py`` file and the examples under the ``/examples`` folder to familiarize with ``pyNAVIS``.
-   Also, don't forget to take a look at the :doc:`pyNAVIS package section <pyNAVIS>`, which has all the information about classes and methods.
+   Now you have everything set up. Take a look at the ``main.py`` file, the notebooks and the examples under the ``src/examples`` folder to familiarize with ``pyNTAVIS``.
+   Also, don't forget to take a look at the :doc:`pyNTAVIS package section <pyNTAVIS>`, which has all the information about classes and methods.
 
 .. warning::
-   If you want to add new functionalities to ``pyNAVIS``, please visit the :doc:`Contributing section <Contributing>`.
+   If you want to add new functionalities to ``pyNTAVIS``, please visit the :doc:`Contributing section <Contributing>`.

@@ -1,7 +1,7 @@
 General information
 ====================
 
-In this section some general information regarding ``pyNAVIS`` and other aspects related to it can be found.
+In this section some general information regarding ``pyNTAVIS`` and other aspects related to it can be found.
 
 .. toctree::
    :maxdepth: 1

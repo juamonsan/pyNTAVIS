@@ -2,6 +2,7 @@
 
 <p>
 <a href="http://www.gnu.org/licenses/gpl-3.0"><img src="https://img.shields.io/badge/License-GPL%20v3-blue.svg"/></a>
+<a href="https://pyntavis.readthedocs.io/en/latest/"><img src="https://readthedocs.org/projects/pyntavis/badge/?version=latest"/></a>
 </p>
 
 <p align="justify">
@@ -118,7 +119,7 @@ pip install torch snntorch        # only for the SNN notebook and scripts
 ```
 
 <p align="justify">
-In Google Colab, the first cell of each notebook does this automatically. The general pyNAVIS documentation is at <a href="https://pynavis.readthedocs.io/en/latest/">ReadTheDocs</a> (replace <code>pyNAVIS</code> with <code>pyNTAVIS</code> in its import examples); it does not cover the three-axis additions, which are documented in the docstrings and the notebooks. The <code>docs/</code> folder of this repository is the original pyNAVIS documentation and has not been updated.
+In Google Colab, the first cell of each notebook does this automatically. The full documentation, including the three-axis functions, examples and the API reference, is at <a href="https://pyntavis.readthedocs.io/en/latest/">Read the Docs</a> (built from the <code>docs/</code> folder of this repository).
 </p>
 
 

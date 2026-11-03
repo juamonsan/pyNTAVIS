@@ -2,18 +2,18 @@
 Manually split spiking information
 ******************************************************
 
-With ``pyNAVIS`` you can both select a specific portion of time from a file and extract it, and also get the information from a set of addresses which can be specified by the user.
+With ``pyNTAVIS`` you can both select a specific portion of time from a file and extract it, and also get the information from a set of addresses which can be specified by the user.
 
 1. Extract a portion of the file
 ################################
 
-To do this, you should use the ``manual_splitter()`` function from the :doc:`Splitters class <../pyNAVIS.splitters>`.
+To do this, you should use the ``manual_splitter()`` function from the :doc:`Splitters class <../pyNTAVIS.splitters>`.
 
 Here you can find an example where a file is loaded and then a portion of it is extracted (from 0 to 100000 microseconds):
 
 .. prompt:: python \
 
-    from pyNAVIS import *
+    from pyNTAVIS import *
 
     init_timestamp = 0          # microseconds
     end_timestamp  = 100000     # microseconds
@@ -34,13 +34,13 @@ Whose information can be saved into a file, plotted, or processed.
 
 You can also extract a user-defined set of addresses from a file.
 
-To do this, you should use the ``extract_channels_activities()`` function from the :doc:`Functions class <../pyNAVIS.functions>`.
+To do this, you should use the ``extract_channels_activities()`` function from the :doc:`Functions class <../pyNTAVIS.functions>`.
 
 See the following example:
 
 .. prompt:: python \
 
-    from pyNAVIS import *
+    from pyNTAVIS import *
 
     addresses_set = [0, 1, 2, 3]   # List of addresses to extract from the file. Can also be set with range(4).
 
@@ -51,4 +51,7 @@ See the following example:
     addresses_info = Functions.extract_channels_activities(spikes_info, addresses=addresses_set)
 
 If you want to plot **addresses_info**, the settings should be changed to support the number of addresses that this new variable has.
+
+.. note::
+    To split a whole recording into fixed-length windows (for example, to train an SNN), use ``Splitters.window_splitter()``. See the :doc:`SNN example <snn_frames>`.
 

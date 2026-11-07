@@ -97,7 +97,7 @@ NTAS-Fan contains 581 AER recordings (5–5.6 s each) of a 120 mm PC cooling fan
 </p>
 
 <p align="justify">
-<b>Download:</b> <a href="PENDING">idUS – Depósito de Investigación de la Universidad de Sevilla (DOI pending)</a>. The dataset is not stored in this repository: to run the notebooks or scripts with it, place the <code>Fan_NTAS_Dataset</code> folder in <code>src/examples/snn_dataset/</code> (this folder is ignored by git).
+<b>Download:</b> <a href="https://doi.org/10.12795/11441/191328">idUS – Depósito de Investigación de la Universidad de Sevilla, DOI 10.12795/11441/191328</a>. The dataset is not stored in this repository: to run the notebooks or scripts with it, copy the contents of its <code>DATA</code> folder (the AEDAT files and <code>Class_Table.csv</code>) to <code>src/examples/snn_dataset/Fan_NTAS_Dataset/</code> (this folder is ignored by git). Its <code>DOCUMENTATION</code> folder contains a report with the analysis of the dataset and the results of the experiments.
 </p>
 
 <p align="center">
@@ -141,7 +141,8 @@ In Google Colab, the first cell of each notebook does this automatically. The fu
   author={Montes-S{\'a}nchez, Juan Manuel and Segawa, Taishi and Nagazawa, Ryuji and Uwate, Yoko and Vicente-D{\'i}az, Saturnino and Jim{\'e}nez-Fern{\'a}ndez, {\'A}ngel},
   howpublished={idUS (Dep{\'o}sito de Investigaci{\'o}n de la Universidad de Sevilla)},
   year={2026},
-  note={DOI pending}
+  doi={10.12795/11441/191328},
+  url={https://doi.org/10.12795/11441/191328}
 }
 ```
 

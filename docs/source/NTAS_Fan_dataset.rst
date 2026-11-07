@@ -7,8 +7,9 @@ NTAS-Fan is a public dataset of AER recordings of a PC cooling fan acquired with
 :doc:`SNN example <Examples/snn_frames>`).
 
 .. note::
-   **Download:** idUS – Depósito de Investigación de la Universidad de Sevilla (DOI pending). The dataset is not stored
-   in the GitHub repository.
+   **Download:** idUS – Depósito de Investigación de la Universidad de Sevilla, DOI `10.12795/11441/191328 <https://doi.org/10.12795/11441/191328>`_. The dataset
+   is not stored in the GitHub repository. Its ``DATA`` folder contains the recordings and ``Class_Table.csv``, and its
+   ``DOCUMENTATION`` folder a report with the analysis of the dataset and the results of the experiments.
 
 
 Contents
@@ -63,8 +64,8 @@ Settings
 Using it with the examples
 ==========================
 
-To run the SNN notebook or the experiment scripts of the repository with the dataset, place the ``Fan_NTAS_Dataset``
-folder in ``src/examples/snn_dataset/`` (this folder is ignored by git). The scripts in ``src/examples`` are:
+To run the SNN notebook or the experiment scripts of the repository with the dataset, copy the contents of its ``DATA``
+folder to ``src/examples/snn_dataset/Fan_NTAS_Dataset/`` (this folder is ignored by git). The scripts in ``src/examples`` are:
 
 =================================================== ===============================================================================
 Script                                              Purpose

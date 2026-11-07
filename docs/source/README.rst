@@ -102,7 +102,7 @@ If you use the three-axis functions or the NTAS-Fan dataset, please cite the NTA
 
 ``NTAS`` Montes-Sánchez, J. M., Díaz-Romero, S., Ríos-Navarro, A., Vicente-Díaz, S., Linares-Barranco, A., & Jiménez-Fernández, Á. (2026). Introducing the Neuromorphic Tri-Axial Sensor (NTAS). 2026 IEEE Asia Pacific Conference on Circuits and Systems (APCCAS).
 
-``NTAS-Fan dataset`` Montes-Sánchez, J. M., Segawa, T., Nagazawa, R., Uwate, Y., Vicente-Díaz, S., & Jiménez-Fernández, Á. (2026). Dataset of AER data files of a cooling fan in several configurations recorded with the Neuromorphic Tri-Axial Sensor (NTAS-Fan). idUS (Depósito de Investigación de la Universidad de Sevilla). DOI pending.
+``NTAS-Fan dataset`` Montes-Sánchez, J. M., Segawa, T., Nagazawa, R., Uwate, Y., Vicente-Díaz, S., & Jiménez-Fernández, Á. (2026). Dataset of AER data files of a cooling fan in several configurations recorded with the Neuromorphic Tri-Axial Sensor (NTAS-Fan). idUS (Depósito de Investigación de la Universidad de Sevilla). https://doi.org/10.12795/11441/191328
 
 and the original pyNAVIS paper:
 
